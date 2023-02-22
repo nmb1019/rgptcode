@@ -1,0 +1,18 @@
+Package: rgptcode
+Title: Convert Natural Language to R Code
+Version: 1.0.0
+Authors@R: 
+    person("Hisaki", "Nambu",  email = "hisaki.nambu@gmail.com", role = c("aut", "cre"))
+Description: The rgptcode package provides a set of functions to convert natural language into R code. With text2r, users can write natural language commands, and the package will convert them to R code, allowing for a more streamlined coding experience.
+Depends:
+    R
+Imports:
+    jsonlite, 
+    httr, 
+    stringr, 
+    rstudioapi, 
+    shiny
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.3

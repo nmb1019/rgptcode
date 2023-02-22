@@ -1,0 +1,14 @@
+Name: Text to R
+Description: Convert text to R code using GPT-3.
+Binding: texttor
+Interactive: true
+
+Name: Explain with GPT
+Description: Explain R code using GPT-3.
+Binding: explainrcode
+Interactive: true
+
+Name: Setting
+Description: setting
+Binding: setting
+Interactive: true
