@@ -19,8 +19,7 @@ setting <- function() {
   ui <- fluidPage(
     textInput("api_key_input", "OpenAI API Key", ""),
     selectInput("language_input", "Language", c("日本語", "English", "Chinese")),
-    actionButton("save_btn", "Save"),
-    actionButton("edit_btn", "Edit")
+    actionButton("save_btn", "Save")
   )
 
   # サーバーの作成
@@ -37,14 +36,7 @@ setting <- function() {
       settings$api_key <- input$api_key_input
       settings$language <- input$language_input
       saveRDS(settings, file = "settings.rds")
-      showModal(modalDialog(
-        title = "Settings Saved",
-        "Your settings have been saved successfully."
-      ))
-    })
-
-    # 編集ボタンがクリックされたらShinyを再起動
-    observeEvent(input$edit_btn, {
+      print("Your settings have been saved successfully.")
       shiny::stopApp()
     })
   }

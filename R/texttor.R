@@ -23,8 +23,7 @@ setting <- function() {
   ui <- fluidPage(
     textInput("api_key_input", "OpenAI API Key", ""),
     selectInput("language_input", "Language", c("日本語", "English", "Chinese")),
-    actionButton("save_btn", "Save"),
-    actionButton("edit_btn", "Edit")
+    actionButton("save_btn", "Save")
   )
 
   # サーバーの作成
@@ -41,48 +40,43 @@ setting <- function() {
       settings$api_key <- input$api_key_input
       settings$language <- input$language_input
       saveRDS(settings, file = "settings.rds")
-      showModal(modalDialog(
-        title = "Settings Saved",
-        "Your settings have been saved successfully."
-      ))
-    })
-
-    # 編集ボタンがクリックされたらShinyを再起動
-    observeEvent(input$edit_btn, {
-      stopApp()
+      print("Your settings have been saved successfully.")
+      shiny::stopApp()
     })
   }
 
   # アプリケーションの起動
-  shinyApp(ui, server)
+  shiny::shinyApp(ui, server)
 }
 
-# 設定
-if (file.exists("settings.rds")) {
-  # 設定ファイルの読み込み
-  settings <- readRDS("settings.rds")
 
-  # 設定値の取得
-  api_key <- settings$api_key
-  language <- settings$language
+#' @export
+texttor = function(){
 
-  if (api_key == "") {
+  # APIキーの確認
+  if (file.exists("settings.rds")) {
+
+    # 設定ファイルの読み込み
+    settings <- readRDS("settings.rds")
+
+    # 設定値の取得
+    api_key <- settings$api_key
+    language <- settings$language
+
+    if (api_key == "") {
+      setting()
+
+      # 設定値の取得
+      api_key <- settings$api_key
+      language <- settings$language
+    }
+  } else {
     setting()
 
     # 設定値の取得
     api_key <- settings$api_key
     language <- settings$language
   }
-} else {
-  setting()
-
-  # 設定値の取得
-  api_key <- settings$api_key
-  language <- settings$language
-}
-
-#' @export
-texttor = function(){
 
   # 選択したコメントを取得
   capture <- rstudioapi::getActiveDocumentContext()
@@ -95,33 +89,38 @@ texttor = function(){
   selected_text <- capture$contents[range_start:range_end]
 
   #apiキーの確認
-  print(paste0("Will use --> ", api_key, " for authentication."))
+  if (api_key == ""){
+    print("OpenAI apiキーを入力してください。")
+    setting()
+  } else {
+    # APIに送信するためのリクエストの作成
+    body <- list(prompt = paste("translate the following instructions into the code of r. Note that only the code of r should be returned in the reply:", selected_text),
+                 model = 'text-davinci-003',
+                 temperature = 0.5,
+                 max_tokens = 100,
+                 n = 1,
+                 stop = NULL,
+                 frequency_penalty = 0,
+                 presence_penalty = 0)
 
-  # APIに送信するためのリクエストの作成
-  body <- list(prompt = paste("translate the following instructions into the code of r. Note that only the code of r should be returned in the reply:", selected_text),
-               model = 'text-davinci-003',
-               temperature = 0.5,
-               max_tokens = 50,
-               n = 1,
-               stop = NULL,
-               frequency_penalty = 0,
-               presence_penalty = 0)
+    # GPT-3 APIにリクエストを送信
+    response <- httr::POST("https://api.openai.com/v1/completions"
+                           , body = body
+                           , httr::add_headers(.headers =
+                                                 c("content-type" = "application/json",
+                                                   "Authorization" =  paste("Bearer", api_key)))
+                           , encode = "json")
 
-  # GPT-3 APIにリクエストを送信
-  response <- httr::POST("https://api.openai.com/v1/completions"
-                         , body = body
-                         , httr::add_headers(.headers =
-                                               c("content-type" = "application/json",
-                                                 "Authorization" =  paste("Bearer", api_key)))
-                         , encode = "json")
+    # レスポンスの解析
+    result <- jsonlite::fromJSON(httr::content(response, as = "text"))
+    insert_text <- stringr::str_replace(result$choices$text, "^(\n+)", "")
 
-  # レスポンスの解析
-  result <- jsonlite::fromJSON(httr::content(response, as = "text"))
-  insert_text <- stringr::str_remove_all(result$choices$text, "\n")
+    print(paste("result", result))
 
-  print(paste("result", result))
+    # 回答を1行下に挿入
+    rstudioapi::insertText(paste(selected_text, "\n", insert_text))
 
-  # 回答を1行下に挿入
-  rstudioapi::insertText(paste(selected_text, "\n", insert_text))
+  }
+
 }
 
